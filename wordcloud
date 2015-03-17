@@ -1,0 +1,140 @@
+#!/usr/bin/env perl
+
+# Blosxom Plugin: 
+# Author(s): Ansgar Wiechers <ansgar.wiechers@planetcobalt.net>
+# Version: 0.1
+
+package wordcloud;
+
+use warnings;
+use strict;
+
+use lib '/usr/local/lib/perl';
+use File::Basename qw(basename);
+use HTML::TagCloud;
+
+# --- Configurable Variables ---
+
+# Ignore keywords with a count of $threshold or less.
+my $threshold = 3;
+
+# Show only $maxtags entries in tag cloud.
+my $maxtags = 200;
+
+# ------------------------------
+
+our $cloud = '';
+
+sub start {
+	return 1;
+}
+
+sub filter {
+	my $keywords = &read_files;
+
+	# NOTE: case-insensitive sorting requires a patch to HTML::WordCloud
+	my $tc = new HTML::TagCloud(ignore_case=>1);
+	foreach my $keyword (values $keywords) {
+		my $term = $keyword->{name};
+		$term =~ s/ /%20/g;
+		my $url = "$blosxom::url/index.$blosxom::flavour?find=%22$term%22";
+		$tc->add($keyword->{name}, $url, $keyword->{count}) if $keyword->{count} > $threshold;
+	}
+
+	$cloud = $tc->html($maxtags);
+
+	return 1;
+}
+
+sub get_keywords {
+	my ($str) = @_;
+
+  my @kw = ();
+  push @kw, "$1" while $str =~ m/<kw>(.*?)<\/kw>/sig;
+  push @kw, "$1" while $str =~ m/<kwx>(.*?)<\/kwx>/sig;
+
+	return @kw;
+}
+
+sub read_files {
+	chdir $blosxom::datadir or die "Cannot change directory to $blosxom::datadir: $!";
+
+	my %keywords;
+
+	foreach my $file (glob "*.$blosxom::file_extension") {
+		open(FILE, "<$file") or die "Cannot open $file: $!";
+		my @story = <FILE>;
+		close(FILE);
+
+		chomp @story;
+		my $story  = join ' ', @story;
+
+		foreach my $keyword (&get_keywords($story)) {
+			my $key = lc($keyword);
+			$keywords{$key} = { name => $keyword, count => 0 } unless defined $keywords{$key};
+			$keywords{$key}->{count}++;
+		}
+	}
+
+	return \%keywords;
+}
+
+1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Blosxom Plugin: wordcloud
+
+=head1 SYNOPSIS
+
+Blosxom plugin that counts the keywords in blog posts (as defined for the
+L<keywords> plugin) and creates a word cloud from them.
+
+=head1 DESCRIPTION
+
+Blosxom plugin that counts the keywords in blog posts (as defined for the
+L<keywords> plugin) and creates a word cloud from them. The L<find> plugin is
+used for linking to a list of posts containing the respective keyword.
+
+Put $wordcloud::cloud into your template to create a word cloud.
+
+=head1 SEE ALSO
+
+Blosxom: http://blosxom.sourceforge.net/
+
+L<find>
+
+L<keywords>
+
+=head1 AUTHOR
+
+Ansgar Wiechers <ansgar.wiechers@planetcobalt.net>
+
+=head1 LICENSE
+
+This Blosxom Plugin
+Copyright 2015, Ansgar Wiechers
+ 
+(This license is the same as Blosxom's)
+ 
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+ 
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+ 
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
