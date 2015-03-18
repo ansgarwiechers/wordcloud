@@ -33,10 +33,10 @@ sub start {
 }
 
 sub filter {
-	my $keywords = &read_files;
+	my %keywords = &read_files;
 
 	my $tc = new HTML::TagCloud(ignore_case=>$ignore_case);
-	foreach my $keyword (values $keywords) {
+	foreach my $keyword (values %keywords) {
 		my $term = $keyword->{name};
 		$term =~ s/ /%20/g;
 		my $url = "$blosxom::url/index.$blosxom::flavour?find=%22$term%22";
@@ -83,7 +83,7 @@ sub read_files {
 		}
 	}
 
-	return \%keywords;
+	return %keywords;
 }
 
 1;
