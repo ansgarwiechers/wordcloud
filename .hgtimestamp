@@ -1,6 +1,7 @@
 {
 "Version": "0.2.8",
 "FileData":{
+".hgtags": {"timestamp": 1426706564.0},
 "find": {"timestamp": 1426703862.0},
 "keywords": {"timestamp": 1426703016.0},
 "TagCloud_compare_mode.patch": {"timestamp": 1426618373.0},
