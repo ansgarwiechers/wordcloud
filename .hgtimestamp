@@ -1,8 +1,10 @@
 {
 "Version": "0.2.8",
 "FileData":{
+"find": {"timestamp": 1426703862.0},
+"keywords": {"timestamp": 1426703016.0},
 "TagCloud_compare_mode.patch": {"timestamp": 1426618373.0},
-"wordcloud": {"timestamp": 1426627118.0},
+"wordcloud": {"timestamp": 1426702945.0},
 "TimestampMod_LastRecord": {"timestamp": 0}
 }
 }

@@ -1,6 +1,4 @@
-#!/usr/bin/env perl
-
-# Blosxom Plugin: 
+# Blosxom Plugin: wordcloud
 # Author(s): Ansgar Wiechers <ansgar.wiechers@planetcobalt.net>
 # Version: 0.1
 
@@ -9,17 +7,22 @@ package wordcloud;
 use warnings;
 use strict;
 
-use lib '/usr/local/lib/perl';
 use File::Basename qw(basename);
 use HTML::TagCloud;
 
 # --- Configurable Variables ---
 
 # Ignore keywords with a count of $threshold or less.
-my $threshold = 3;
+my $threshold = 0;
 
-# Show only $maxtags entries in tag cloud.
-my $maxtags = 200;
+# Count keywords only once per file.
+my $unique = 0;
+
+# Sort tags case-insensitive. NOTE: this requires a patch to HTML::WordCloud!
+my $ignore_case = 0;
+
+# Show only $limit entries in tag cloud.
+my $limit = 200;
 
 # ------------------------------
 
@@ -32,8 +35,7 @@ sub start {
 sub filter {
 	my $keywords = &read_files;
 
-	# NOTE: case-insensitive sorting requires a patch to HTML::WordCloud
-	my $tc = new HTML::TagCloud(ignore_case=>1);
+	my $tc = new HTML::TagCloud(ignore_case=>$ignore_case);
 	foreach my $keyword (values $keywords) {
 		my $term = $keyword->{name};
 		$term =~ s/ /%20/g;
@@ -41,7 +43,7 @@ sub filter {
 		$tc->add($keyword->{name}, $url, $keyword->{count}) if $keyword->{count} > $threshold;
 	}
 
-	$cloud = $tc->html($maxtags);
+	$cloud = $tc->html($limit);
 
 	return 1;
 }
@@ -52,6 +54,11 @@ sub get_keywords {
   my @kw = ();
   push @kw, "$1" while $str =~ m/<kw>(.*?)<\/kw>/sig;
   push @kw, "$1" while $str =~ m/<kwx>(.*?)<\/kwx>/sig;
+
+	if ($unique) {
+		my %hash = map {$_, 1} @kw;
+		@kw = keys %hash;
+	}
 
 	return @kw;
 }
@@ -104,7 +111,7 @@ Put $wordcloud::cloud into your template to create a word cloud.
 
 =head1 SEE ALSO
 
-Blosxom: http://blosxom.sourceforge.net/
+L<Blosxom|http://blosxom.sourceforge.net/>
 
 L<find>
 
